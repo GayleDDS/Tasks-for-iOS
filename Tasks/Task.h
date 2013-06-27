@@ -7,36 +7,23 @@
 
 #import <Foundation/Foundation.h>
 
-@interface Task : NSObject {
-    NSDate *modified;
-    BOOL *done;
-}
-- (Task*)init;
-- (Task*)initWithTitle:(NSString*)name;
+@class TaskList;
 
-- (void)setModified: (NSDate *)date;
+@interface Task : NSObject
 
-@property(nonatomic,retain) NSString* title;
+@property(nonatomic,copy)               NSString       *title;
+@property(nonatomic,copy)               NSDate         *modifiedDate;
+@property(nonatomic,getter=isCompleted) BOOL            completed;
 
--(void) setTitle:(NSString *)title;
+- (Task *)initWithTitle:(NSString *)name;
 
--(NSDate *)modifiedDate;
 -(NSString *)modifiedString;
+- (void)toggleCompleted;
 
-// Children
-@property (retain) NSMutableArray* childrenTasks;
-@property (retain) id parentTask;
-- (void)addChild:(Task*)child;
-- (void)removeChild:(Task*)child;
-
-// Completed
--(BOOL)completed;
-- (BOOL)notCompleted;
-- (void)switchDone;
-
-- (void)makeAllChildrenComplete;
-- (void)deleteChildren;
-
+// SubTasks
+- (BOOL)hasSubTasks;
+- (TaskList *)subTasks;
+- (void)addSubTasks:(TaskList *)aTaskList;
 
 @end
 

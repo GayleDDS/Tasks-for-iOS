@@ -6,116 +6,110 @@
 //
 
 #import "Task.h"
+#import "TaskList.h"
 
 #define NOW [NSDate date]
 
+@interface Task ()
+
+@property(nonatomic,retain)  TaskList* children;
+@property(nonatomic,assign)  id        parent;
+
+@end
+
 @implementation Task
-@synthesize title;
-@synthesize childrenTasks;
 
+#pragma mark - NSObject Life Cycle
 
-- (Task*)init; {
-    [super init];
-
-    title = @"<no title>";
-    modified = 0;
-    return self;
-}
-- (Task *)initWithTitle:(NSString*)name;
+- (Task *)initWithTitle:(NSString*)name
 {
-    [super init];
-    title = name;
+    self = [super init];
+    
+    if (self != nil) {
+        self.title = name;
+        self.modifiedDate = NOW;
+    }
     
     return self;
 }
 
 -(void)dealloc
 {
+    self.title        = nil;
+    self.modifiedDate = nil;
+    self.children     = nil;
+    self.parent       = nil;
+    
     [super dealloc];
-    title = nil;
-    [childrenTasks removeAllObjects];
-}
-- (void)setTitle: (NSString *) t; {
-    modified = NOW;
-    [title release];
-    self.title = [t retain];
 }
 
+#pragma mark - Overridden Getters and Setters
 
-- (void)setModified: (NSDate *)date;
+- (void)setTitle:(NSString *)newTitle
 {
-    modified = date;
+    _title = [newTitle retain];
+    self.modifiedDate = NOW;
 }
 
-
--(NSDate*)modifiedDate; {
-    return modified;
-}
--(NSString *)modifiedString;
+- (void)setCompleted:(BOOL)completed
 {
-    NSCalendar* cal = [[NSCalendar alloc] init];
-    NSString* ret;
-    if(modified)
-    {
-        NSDateFormatter *f = [[NSDateFormatter alloc] init];
-        [f setCalendar:cal];
-        ret = [[f stringFromDate:modified] retain];
-        [cal release];
-    }else
-        return @"not yet modified";
-
-    return [ret autorelease];
-}
-
-
-- (void)addChild:(Task*)child;
-{
-    modified = NOW;
-    [childrenTasks addObject:child];
-    [child setParentTask:self];
-}
-
-- (void)removeChild:(Task*)child { [childrenTasks removeObject:child]; }
-
-
-- (void)switchDone;
-{
-    BOOL newDone = NO;
-    if (done)
-        done = newDone;
-    else
-        newDone = YES;
-
-    done = newDone;
-}
-
--(BOOL)completed; {
-    if (done) return YES;
-    else return NO;
-}
-- (BOOL)notCompleted;
-{
-    if (!done)
-        return NO;
-    else return YES;
-
-}
-
-
-
-- (void) makeAllChildrenComplete;
-{
-    for(int l=0;l!=childrenTasks.count;l=l++)
-        if ([[childrenTasks objectAtIndex:l] notCompleted])
-            [[childrenTasks objectAtIndex:l] switchDone];
-}
-- (void)deleteChildren;
-{
-    for(int l=0;l<=childrenTasks.count;l=l++) {
-        [childrenTasks removeObjectAtIndex:l];
+    _completed = completed;
+    
+    for (Task *aTask in [self.children allTasks]) {
+        aTask.completed = completed;
     }
 }
 
+- (TaskList *)children
+{
+    if (!_children) {
+        _children = [[TaskList alloc] init];
+    }
+    return _children;
+}
+
+#pragma mark - Public Methods
+
+-(NSString *)modifiedString;
+{
+    NSString *dateString;
+    
+    if (self.modifiedDate) {
+        dateString = [NSDateFormatter localizedStringFromDate:self.modifiedDate
+                                                    dateStyle:NSDateFormatterFullStyle
+                                                    timeStyle:NSDateFormatterFullStyle];
+    } else {
+        dateString = @"modified date not set.";
+    }
+    
+    return dateString;
+}
+
+- (void)toggleCompleted;
+{
+    self.completed = ! self.completed;
+}
+
+#pragma mark - Public Methods managing SubTasks
+
+- (BOOL)hasSubTasks
+{
+    return [self.children hasTasks];
+}
+
+- (TaskList *)subTasks
+{
+    return self.children;
+}
+
+- (void)addSubTasks:(TaskList*)aTaskList
+{
+    self.modifiedDate = NOW;
+    for (Task *aTask in [aTaskList allTasks]) {
+        aTask.parent = self;
+    }
+    [self.children addTaskList:aTaskList];
+}
 
 @end
 

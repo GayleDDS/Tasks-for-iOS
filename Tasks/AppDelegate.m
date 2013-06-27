@@ -6,19 +6,22 @@
 //
 
 #import "AppDelegate.h"
+#import "TaskList.h"
 #import "Task.h"
 #import "TasksTableViewController.h"
 
-NSString *kTitle = @"title";
-NSString *kCompleted = @"completed";
-NSString *kChildren = @"children";
+NSString * const kTitle     = @"title";
+NSString * const kCompleted = @"completed";
+NSString * const kChildren  = @"children";
 
 
 @implementation AppDelegate
 
 - (void)dealloc
 {
-    [_window release];
+    self.navigationController     = nil;
+    self.window                   = nil;
+    
     [super dealloc];
 }
 
@@ -26,9 +29,9 @@ NSString *kChildren = @"children";
 {
     self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
 
-    self.tasksTableViewController = [[[TasksTableViewController alloc] initWithTasks:[self _generateTasks]] autorelease];
+    TasksTableViewController *tasksTableViewController = [[[TasksTableViewController alloc] initWithTaskList:[self _generateTaskList]] autorelease];
     
-    self.navigationController = [[[UINavigationController alloc] initWithRootViewController:self.tasksTableViewController] autorelease];
+    self.navigationController = [[[UINavigationController alloc] initWithRootViewController:tasksTableViewController] autorelease];
     self.navigationController.toolbarHidden = NO;
     
     [self.window setRootViewController:self.navigationController];
@@ -39,7 +42,7 @@ NSString *kChildren = @"children";
 }
 
 
-- (NSArray *)_generateTasks
+- (TaskList *)_generateTaskList
 {
     NSArray *taskDescriptions =
     @[
@@ -78,36 +81,31 @@ NSString *kChildren = @"children";
 
       ];
 
-    return [self _tasksFromDescriptions:taskDescriptions];
+    return [self _taskListFromDescriptions:taskDescriptions];
 }
 
-- (NSArray *)_tasksFromDescriptions:(NSArray *)taskDescriptions
+- (TaskList *)_taskListFromDescriptions:(NSArray *)taskDescriptions
 {
-    NSMutableArray *tasks = [NSMutableArray array];
+    TaskList *tasks = [[TaskList alloc] init];
 
     for (NSDictionary *taskDescription in taskDescriptions) {
 
         NSString *title = [taskDescription objectForKey:kTitle];
         BOOL completed = [[taskDescription objectForKey:kCompleted] boolValue];
-        NSArray *childrenDescriptions = [taskDescription objectForKey:kChildren];
-
+        NSArray *subTaskDescriptions = [taskDescription objectForKey:kChildren];
 
         Task *task = [[[Task alloc] initWithTitle:title] autorelease];
-        task.childrenTasks = [NSMutableArray array];
-        if (completed != task.completed) [task switchDone];
-
-        if (childrenDescriptions != nil && childrenDescriptions.count > 0) {
-            NSArray *children = [self _tasksFromDescriptions:childrenDescriptions];
-            for (Task *child in children) {
-                [task addChild:child];
-                NSLog(@"adding");
-            }
+        task.completed = completed;
+        
+        if (subTaskDescriptions.count) {
+            TaskList * subTasks = [self _taskListFromDescriptions:subTaskDescriptions];
+            [task addSubTasks:subTasks];
         }
 
-        [tasks addObject:task];
+        [tasks addTask:task];
     }
     
-    return tasks;
+    return [tasks autorelease];
 }
 
 

@@ -1,0 +1,53 @@
+1. Project builds clean and runs
+
+2. Analyze findes only 4 errors
+
+/Users/gdunham/Development/Job Search Samples/Tasks for iOS/Tasks/Task.m:20:5: 
+    Instance variable used while 'self' is not set to the result of '[(super or self) init...]'
+
+/Users/gdunham/Development/Job Search Samples/Tasks for iOS/Tasks/Task.m:27:5: 
+    Instance variable used while 'self' is not set to the result of '[(super or self) init...]'
+
+/Users/gdunham/Development/Job Search Samples/Tasks for iOS/Tasks/Task.m:62:15: 
+    Potential leak of an object stored into 'f'
+
+/Users/gdunham/Development/Job Search Samples/Tasks for iOS/Tasks/Task.m:65:17: 
+    Potential leak of an object stored into 'cal'
+
+3. Code is pretty messy
+
+sloccount --details .
+
+13	objc	Tasks	AppDelegate.h
+83	objc	Tasks	AppDelegate.m
+14	objc	Tasks	main.m
+30	objc	Tasks	Task.h
+94	objc	Tasks	Task.m
+14	objc	Tasks	TaskCell.h
+56	objc	Tasks	TaskCell.m
+10	objc	Tasks	TasksTableViewController.h
+98	objc	Tasks	TasksTableViewController.m
+----
+412
+
+4. Refactor Class Task
+5. Create TaskList Class
+6. Refactor Class TaskCell
+7. Refactor Class TasksTableViewController
+8. Refactor Class AppDelegate
+9. Added Edit Table View to better test sorting
+
+
+12	objc	Tasks	AppDelegate.h
+81	objc	Tasks	AppDelegate.m
+14	objc	Tasks	main.m
+20	objc	Tasks	Task.h
+87	objc	Tasks	Task.m
+12	objc	Tasks	TaskCell.h
+39	objc	Tasks	TaskCell.m
+22	objc	Tasks	TaskList.h
+82	objc	Tasks	TaskList.m
+11	objc	Tasks	TasksTableViewController.h
+101	objc	Tasks	TasksTableViewController.m
+---
+481

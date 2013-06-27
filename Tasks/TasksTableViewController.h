@@ -7,8 +7,10 @@
 
 #import <UIKit/UIKit.h>
 
+@class TaskList;
+
 @interface TasksTableViewController : UITableViewController
 
-- (id)initWithTasks:(NSArray *)tasks;
+- (id)initWithTaskList:(TaskList *)tasks;
 
 @end

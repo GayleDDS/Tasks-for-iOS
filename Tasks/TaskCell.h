@@ -9,14 +9,10 @@
 
 #import "Task.h"
 
-@interface TaskCell : UITableViewCell {
-    
-}
+@interface TaskCell : UITableViewCell
 
-@property (nonatomic, retain) Task *task;
+@property(nonatomic,getter=isCompleted) BOOL completed;
 
-- (void)configureStyle;
-
-- (void)setInactive;
+- (void)toggleCompleted;
 
 @end

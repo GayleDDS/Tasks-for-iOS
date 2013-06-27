@@ -6,16 +6,19 @@
 //
 
 #import "TasksTableViewController.h"
+#import "TaskList.h"
 #import "Task.h"
 #import "TaskCell.h"
 
 @interface TasksTableViewController ()
-@property (nonatomic, retain) NSArray *tasks;
+
+@property (nonatomic, retain) TaskList *tasks;
+
 @end
 
 @implementation TasksTableViewController
 
-- (id)initWithTasks:(NSArray *)tasks
+- (id)initWithTaskList:(TaskList *)tasks
 {
     self = [super initWithStyle:UITableViewStylePlain];
     if (self != nil) {
@@ -33,8 +36,11 @@
                                                                action:@selector(sort)] autorelease]
                               ];
 
-        [self.tableView registerClass:[TaskCell class]
-               forCellReuseIdentifier:@"TaskCell"];
+        [self.tableView registerClass:[TaskCell class] forCellReuseIdentifier:@"TaskCell"];
+
+        self.navigationItem.rightBarButtonItem = self.editButtonItem;
+
+        
     }
     return self;
 }
@@ -60,20 +66,14 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    id cell = [tableView dequeueReusableCellWithIdentifier:@"TaskCell" forIndexPath:indexPath];
-
-    [cell configureStyle];
-    [cell setTask:[self.tasks objectAtIndex:[indexPath row]]];
+    TaskCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TaskCell" forIndexPath:indexPath];
 
     Task *task = [self.tasks objectAtIndex:[indexPath row]];
-    if ([task.childrenTasks count] > 0)
-        [cell setAccessoryType:UITableViewCellAccessoryDetailDisclosureButton];
-    else
-        [cell setAccessoryType:UITableViewCellAccessoryNone];
-
-    if (task.completed) {
-        [cell setInactive];
-    }
+    
+    cell.textLabel.text = task.title;
+    cell.completed      = task.completed;
+    cell.accessoryType  = task.hasSubTasks ? UITableViewCellAccessoryDetailDisclosureButton :
+                                             UITableViewCellAccessoryNone;
 
     return cell;
 }
@@ -84,44 +84,58 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     id cell = [tableView cellForRowAtIndexPath:indexPath];
-    [[cell task] switchDone];
+    Task *task = [self.tasks objectAtIndex:[indexPath row]];
 
-    if ([[cell task] completed]) {
-        [cell setInactive];
-    } else {
-        [[cell textLabel] setTextColor:[UIColor blackColor]];
-    }
-
+    [task toggleCompleted];
+    [cell toggleCompleted];
+    
     [tableView deselectRowAtIndexPath:indexPath animated:NO];
 }
 
 - (void)tableView:(UITableView *)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)indexPath
 {
-    id cell = [tableView cellForRowAtIndexPath:indexPath];
+    Task *task = [self.tasks objectAtIndex:[indexPath row]];
 
-    TasksTableViewController *tvc = [[[TasksTableViewController alloc] initWithTasks:[[cell task] childrenTasks]] autorelease];
-    tvc.title = [[cell task] title];
+    TasksTableViewController *tvc = [[TasksTableViewController alloc] initWithTaskList:[task subTasks]];
+    tvc.title = task.title;
 
     [self.navigationController pushViewController:tvc animated:YES];
+    [tvc release];
 }
 
 - (void)completeAll
 {
-    for (UITableViewCell *cell in self.tableView.visibleCells) {
-
-        if (![[(TaskCell *)cell task] completed]) {
-            [(TaskCell *)cell setInactive];
-            [[(TaskCell *)cell task] switchDone];
-        }
-    }
+    [self.tasks markAllTasksComplete];
+    
+    [self.tableView reloadData];
 }
 
 - (void)sort
 {
-    self.tasks = [self.tasks sortedArrayUsingSelector:@selector(title)];
+    NSArray *oldTaskList = [self.tasks allTasks];
+    
+    [self.tasks sort];
+    
+    [self.tableView beginUpdates];
 
-    // This would look much nicer with animations, wouldn't it? :)
-    [self.tableView reloadData];
+    for (Task *aTask in [self.tasks allTasks]) {
+        NSInteger *oldRow = [oldTaskList indexOfObject:aTask];
+        NSInteger *newRow = [self.tasks  indexOfObject:aTask];
+        
+        NSIndexPath *oldPath = [NSIndexPath indexPathForRow:oldRow inSection:0];
+        NSIndexPath *newPath = [NSIndexPath indexPathForRow:newRow inSection:0];
+
+        [self.tableView moveRowAtIndexPath:oldPath toIndexPath:newPath];
+    }
+
+    [self.tableView endUpdates];
 }
+
+// Override to support rearranging the table view.
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath
+{
+    [self.tasks moveTaskAtIndex:fromIndexPath.row toIndex:toIndexPath.row];
+}
+
 
 @end
